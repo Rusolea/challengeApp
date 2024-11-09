@@ -1,18 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../../services/firebase";
-
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-
 
 function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setLoading(true);  // Activa el estado de carga
+        setError(null);    // Limpia cualquier error previo
         try {
             await signInWithEmailAndPassword(auth, email, password);
             navigate("/");
@@ -25,23 +26,31 @@ function LoginForm() {
                 setError("Ocurrió un error inesperado. Por favor intenta de nuevo.");
             }
         }
+        setLoading(false); // Desactiva el estado de carga
     };
 
     const handleGoogleLogin = async () => {
+        setLoading(true);
+        setError(null);
         try {
             await signInWithPopup(auth, googleProvider);
             navigate("/");
         } catch (error) {
             setError("Ocurrió un error inesperado con Google. Por favor intenta de nuevo.");
         }
+        setLoading(false);
     };
 
     return (
         <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
-            <div className="card shadow p-4 login-card">
+            <div className="card shadow p-4" style={{ maxWidth: "400px", width: "100%" }}>
                 <h3 className="text-center mb-4 fw-bold">Iniciar Sesión</h3>
 
-                {error && <div className="alert alert-danger" role="alert">{error}</div>}
+                {error && (
+                    <div className="alert alert-danger" role="alert" aria-live="polite">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleLogin}>
                     <InputField
@@ -61,8 +70,8 @@ function LoginForm() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
 
-                    <button type="submit" className="btn btn-primary w-100 mb-3">
-                        Iniciar Sesión
+                    <button type="submit" className="btn btn-primary w-100 mb-3" disabled={loading}>
+                        {loading ? "Cargando..." : "Iniciar Sesión"}
                     </button>
                 </form>
 
@@ -70,8 +79,8 @@ function LoginForm() {
                     <span className="text-muted">o</span>
                 </div>
 
-                <button onClick={handleGoogleLogin} className="btn btn-danger w-100 mb-3">
-                    Iniciar sesión con Google
+                <button onClick={handleGoogleLogin} className="btn btn-danger w-100 mb-3" disabled={loading}>
+                    {loading ? "Cargando..." : "Iniciar sesión con Google"}
                 </button>
 
                 <div className="text-center">
@@ -93,6 +102,7 @@ function LoginForm() {
     );
 }
 
+// Componente InputField reutilizable para manejar campos de entrada
 function InputField({ id, label, type, value, onChange, placeholder }) {
     return (
         <div className="mb-3">
